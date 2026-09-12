@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: 后端构建（Spring Boot 3.5 / Java 17）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: openpis-server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Maven 构建
+        # 当前无单元测试，编译即门禁；补充单测后改为 mvn -B verify
+        run: mvn -B -s settings.xml -DskipTests package
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: openpis-server-jar
+          path: openpis-server/openpis-admin/target/*.jar
+          retention-days: 7
+          if-no-files-found: error
+
+  frontend:
+    name: 前端构建（Vue 3 / Vite）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: openpis-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: openpis-web/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建
+        run: npm run build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: openpis-web-dist
+          path: openpis-web/dist/
+          retention-days: 7
+          if-no-files-found: error

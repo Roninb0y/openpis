@@ -27,6 +27,21 @@
 
 **播放调度算法**：同一时刻多个计划重叠时，按播放类型优先级自动仲裁（emergency > insert > loop），周计划按星期生效；时间段要求结束时间晚于开始时间。
 
+<!-- 开源到 GitHub 后，把下面的 OWNER/REPO 替换为真实仓库地址即可启用 CI 徽章
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+-->
+
+## 文档导航
+
+| 文档 | 说明 |
+|------|------|
+| [USAGE.md](USAGE.md) | **详细使用手册**：安装升级 / 全部配置项 / 功能详解 / API 参考 / 典型示例 / FAQ / 故障排除 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 参与贡献指南（开发环境 / 提交约定 / 自测要求） |
+| [CHANGELOG.md](CHANGELOG.md) | 版本变更记录（Keep a Changelog 格式） |
+| [SECURITY.md](SECURITY.md) | 安全漏洞私下报告流程与部署安全建议 |
+| [LICENSE](LICENSE) | MIT 开源协议 |
+| [.env.example](.env.example) | 环境变量清单模板（仅变量名与说明，不含真实值） |
+
 ## 系统架构
 
 ```

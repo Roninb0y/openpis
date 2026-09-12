@@ -84,9 +84,13 @@ cd pis1
 # 2. 创建数据库（表结构由后端 JPA 自动创建，无需手工建表）
 mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS openpis_lite DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 3. 修改数据库连接配置
-#    编辑 openpis-server/openpis-admin/src/main/resources/application.yml
-#    修改 spring.datasource.username / password 为你的 MySQL 账号
+# 3. 创建本地敏感配置文件（真实数据库密码放这里，该文件已被 .gitignore 忽略）
+#    在 openpis-server/ 目录下新建 application-local.yml：
+#      spring:
+#        datasource:
+#          password: "你的数据库密码"
+#    用户名 / 地址如需修改，直接编辑 application.yml 的
+#    spring.datasource.username / url
 
 # 4. 构建并启动后端（在 openpis-server 目录下执行）
 cd openpis-server
@@ -121,7 +125,7 @@ docker compose up -d --build
 |------|------|
 | 管理后台 | http://localhost:8081 |
 | 播放端 | http://localhost:8081/player?code=TV-01 |
-| MySQL（宿主机） | localhost:3307（账号 root / 438438） |
+| MySQL（宿主机） | localhost:3307（账号 root，密码为项目根目录 `.env` 中的 `MYSQL_ROOT_PASSWORD`，首次部署前需按 `.env.example` 创建 `.env`） |
 
 > 注意：该 compose 编写于标准 Docker 环境（含 mysql、server、web/nginx 三个服务），发布前未在真实 Docker 环境中完整实测 [待确认：建议首次使用时观察 `docker compose logs -f server` 直至出现 "Started OpenPisApplication"]。
 
@@ -162,6 +166,8 @@ cd ../openpis-web && npm install && npm run build   # 开发模式则改为 npm 
 | `openpis-web/.env.development` | 前端开发环境变量（`npm run dev` 生效） |
 | `openpis-web/.env.production` | 前端生产构建变量（`npm run build` 生效） |
 | `docker-compose.yml` | Docker 部署的服务编排与环境变量 |
+| `.env.example`（根目录） | 全部环境变量的名称与说明模板（仅占位符，不含真实值）；复制为 `.env` 后填入真实值，`.env` 不会被 git 跟踪 |
+| `openpis-web/.env.example` | 前端 Vite 环境变量模板 |
 | `openpis-web/nginx.conf` | Docker 中 nginx 的反向代理规则 |
 
 ### 4.2 后端配置项（application.yml）
@@ -171,7 +177,7 @@ cd ../openpis-web && npm install && npm run build   # 开发模式则改为 npm 
 | `server.port` | `8080` | 后端 HTTP 端口 |
 | `spring.datasource.url` | `jdbc:mysql://localhost:3306/openpis_lite?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true` | 数据库连接串（库名 `openpis_lite`） |
 | `spring.datasource.username` | `root` | 数据库用户名 |
-| `spring.datasource.password` | `"438438"` | 数据库密码，**部署时务必修改** |
+| `spring.datasource.password` | `${SPRING_DATASOURCE_PASSWORD:openpis_change_me}` | 数据库密码，从环境变量读取，或写在本地 `application-local.yml`（见 4.6），**真实密码不要提交** |
 | `spring.jpa.hibernate.ddl-auto` | `update` | 表结构自动维护（新增字段/表） |
 | `spring.servlet.multipart.max-file-size` | `500MB` | 单文件上传上限 |
 | `spring.servlet.multipart.max-request-size` | `500MB` | 单请求上传上限 |
@@ -195,10 +201,13 @@ Spring Boot 支持环境变量覆盖同名配置（下划线映射点号）：
 | 环境变量 | 对应配置 | compose 中的值 |
 |---------|---------|---------------|
 | `SPRING_DATASOURCE_URL` | `spring.datasource.url` | `jdbc:mysql://mysql:3306/openpis_lite?...` |
-| `SPRING_DATASOURCE_PASSWORD` | `spring.datasource.password` | `"438438"` |
+| `SPRING_DATASOURCE_PASSWORD` | `spring.datasource.password` | 取自 `.env` 中的 `MYSQL_ROOT_PASSWORD` |
 | `FILE_ACCESS_URL` | `file.access.url` | `http://localhost:8081/uploads`（浏览器统一走 nginx 8081） |
-| `MYSQL_ROOT_PASSWORD` | MySQL 容器 root 密码 | `"438438"` |
+| `MYSQL_ROOT_PASSWORD` | MySQL 容器 root 密码 | 必填，在 `.env` 中设置（模板见 `.env.example`） |
 | `MYSQL_DATABASE` | MySQL 容器初始化库名 | `openpis_lite` |
+
+> 提示：`docker-compose.yml` 已改为从项目根目录 `.env` 读取口令（不存在时启动会报错提示），
+> 请先按 `.env.example` 创建 `.env`；Compose 会自动加载同目录 `.env` 文件。
 
 ### 4.5 示例配置
 
@@ -225,6 +234,21 @@ jwt:
   secret: please_change_me_to_a_random_string_at_least_32_bytes!
   expiration: 86400000
 ```
+
+### 4.6 本地敏感配置（application-local.yml）
+
+后端通过 `spring.config.import` 加载工作目录下的本地覆盖文件（已被 `.gitignore` 忽略，勿提交）：
+
+```yaml
+# openpis-server/application-local.yml —— 仅本机存在
+spring:
+  datasource:
+    password: "你的数据库密码"
+```
+
+优先级：**环境变量 > application-local.yml > application.yml 默认值**。
+Docker 方式不需要该文件（口令由 compose 从 `.env` 注入容器环境变量）。
+修改密码后重启后端即可生效。
 
 ---
 

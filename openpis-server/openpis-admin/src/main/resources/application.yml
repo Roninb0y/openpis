@@ -4,10 +4,15 @@ server:
 spring:
   application:
     name: openpis-server
+  # 本地敏感配置（数据库密码等）请放在工作目录 application-local.yml（已被 gitignore），
+  # 导入文件的优先级高于本文件；环境变量 SPRING_DATASOURCE_* 优先级最高
+  config:
+    import: optional:file:./application-local.yml
   datasource:
-    url: jdbc:mysql://localhost:3306/openpis_lite?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: "438438"
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/openpis_lite?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    # 真实密码不要写进本文件：用环境变量或 application-local.yml 提供
+    password: ${SPRING_DATASOURCE_PASSWORD:openpis_change_me}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -25,8 +30,8 @@ file:
     url: http://localhost:8080/uploads
 
 jwt:
-  secret: openpis_secret_key_please_change_to_random_string_32bytes
-  expiration: 86400000
+  secret: ${JWT_SECRET:openpis_secret_key_please_change_to_random_string_32bytes}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 logging:
   level:
