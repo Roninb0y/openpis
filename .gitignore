@@ -1,0 +1,18 @@
+# 通用
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.iml
+
+# 后端
+openpis-server/target/
+openpis-server/*/target/
+openpis-server/uploads/
+openpis-server/.mvn/
+openpis-server/mvnw
+openpis-server/mvnw.cmd
+
+# 前端
+openpis-web/node_modules/
+openpis-web/dist/

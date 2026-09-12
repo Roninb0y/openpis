@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.openpis</groupId>
+    <artifactId>openpis-lite</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>openpis-lite</name>
+    <description>OpenPIS-Lite 简版数字标牌/乘客信息发布系统</description>
+
+    <modules>
+        <module>openpis-common</module>
+        <module>openpis-system</module>
+        <module>openpis-material</module>
+        <module>openpis-playlist</module>
+        <module>openpis-layout</module>
+        <module>openpis-program</module>
+        <module>openpis-plan</module>
+        <module>openpis-player</module>
+        <module>openpis-admin</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <openpis.version>1.0.0</openpis.version>
+        <lombok.version>1.18.46</lombok.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <!-- JDK 23+ 默认不启用注解处理器，必须显式开启 Lombok -->
+                        <proc>full</proc>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-common</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-system</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-material</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-playlist</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-layout</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-program</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-plan</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.openpis</groupId>
+                <artifactId>openpis-player</artifactId>
+                <version>${openpis.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

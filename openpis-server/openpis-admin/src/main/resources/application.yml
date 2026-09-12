@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: openpis-server
+  datasource:
+    url: jdbc:mysql://localhost:3306/openpis_lite?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: "438438"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+file:
+  upload:
+    path: ./uploads/
+  access:
+    url: http://localhost:8080/uploads
+
+jwt:
+  secret: openpis_secret_key_please_change_to_random_string_32bytes
+  expiration: 86400000
+
+logging:
+  level:
+    com.openpis: info

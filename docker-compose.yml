@@ -1,0 +1,48 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: openpis-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "438438"
+      MYSQL_DATABASE: openpis_lite
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p438438"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    image: openpis-server:1.0.0
+    build:
+      context: ./openpis-server
+      dockerfile: Dockerfile
+    container_name: openpis-server
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/openpis_lite?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_PASSWORD: "438438"
+      # 浏览器统一通过 nginx(8081) 访问，文件访问地址指向前端入口
+      FILE_ACCESS_URL: http://localhost:8081/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  web:
+    image: openpis-web:1.0.0
+    build:
+      context: ./openpis-web
+      dockerfile: Dockerfile
+    container_name: openpis-web
+    ports:
+      - "8081:80"
+    depends_on:
+      - server
+
+volumes:
+  mysql-data:
