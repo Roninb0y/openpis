@@ -27,3 +27,5 @@ openpis-server/mvnw.cmd
 # 前端
 openpis-web/node_modules/
 openpis-web/dist/
+openpis-web/test-results/
+openpis-web/playwright-report/

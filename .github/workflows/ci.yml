@@ -57,6 +57,12 @@ jobs:
       - name: 构建
         run: npm run build
 
+      - name: 安装播放器测试浏览器
+        run: npx playwright install --with-deps chromium
+
+      - name: 播放器浏览器回归测试
+        run: npm test
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
