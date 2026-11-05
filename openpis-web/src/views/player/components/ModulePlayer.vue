@@ -8,26 +8,26 @@
     <!-- 视频素材 -->
     <video
       v-else-if="currentItem && currentItem.materialType === 'video'"
-      :key="itemIndex + '-' + currentItem.url"
+      :key="cycle"
       :src="currentItem.url"
       autoplay
       muted
       playsinline
       @ended="nextItem"
-      @error="nextItem"
+      @error="onMediaError"
     ></video>
 
     <!-- 图片素材 -->
     <img
       v-else-if="currentItem && currentItem.materialType === 'image'"
-      :key="itemIndex + '-' + currentItem.url"
+      :key="cycle"
       :src="currentItem.url"
-      @error="nextItem"
+      @error="onMediaError"
     />
 
     <!-- 字幕素材 -->
     <div v-else-if="currentItem && currentItem.materialType === 'text'" class="text-scroll-wrap">
-      <div class="text-scroll" :class="{ animate: textContent }">{{ textContent }}</div>
+      <div :key="cycle" class="text-scroll" :class="{ animate: textContent }">{{ textContent }}</div>
     </div>
 
     <!-- 未知素材类型 -->
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import type { PlayerModule, PlayerPlaylistItem } from '@/api/player'
 import { reportPlayLog } from '@/api/player'
 import { formatLocalDateTime } from '@/utils/device'
@@ -48,14 +48,23 @@ const props = defineProps<{
 }>()
 
 const itemIndex = ref(0)
+const cycle = ref(0)
 const textContent = ref('')
 let timer: number | null = null
-let pendingLog: { materialId: number; startedAt: string } | null = null
+let pendingLog: { materialId: number; programId: number; startedAt: string } | null = null
 
 const playlist = computed(() => props.module.playlist)
 const items = computed(() => playlist.value?.items || [])
 const currentItem = computed<PlayerPlaylistItem | null>(() => items.value[itemIndex.value] || null)
 const moduleName = computed(() => props.module.name || props.module.moduleId)
+
+// 轮询会返回新的对象；仅播放内容变化才重置，位置、尺寸和名称变化不打断播放。
+const playlistKey = computed(() => JSON.stringify([
+  props.module.moduleId,
+  props.programId,
+  playlist.value?.id,
+  items.value.map(item => [item.materialId, item.materialType, item.url, item.duration, item.title])
+]))
 
 // ========== 播放日志 ==========
 
@@ -64,7 +73,7 @@ const flushLog = () => {
   reportPlayLog([
     {
       deviceCode: props.deviceCode,
-      programId: props.programId || null,
+      programId: pendingLog.programId || null,
       materialId: pendingLog.materialId,
       startedAt: pendingLog.startedAt,
       endedAt: formatLocalDateTime()
@@ -75,7 +84,11 @@ const flushLog = () => {
 
 const markStarted = (item: PlayerPlaylistItem) => {
   flushLog()
-  pendingLog = { materialId: item.materialId, startedAt: formatLocalDateTime() }
+  pendingLog = {
+    materialId: item.materialId,
+    programId: props.programId,
+    startedAt: formatLocalDateTime()
+  }
 }
 
 // ========== 播放循环 ==========
@@ -95,44 +108,53 @@ const scheduleNext = (seconds: number) => {
 
 const nextItem = () => {
   if (items.value.length === 0) return
-  flushLog()
   itemIndex.value = (itemIndex.value + 1) % items.value.length
+  // 单素材时索引不变，也必须显式启动下一轮（视频需要重新挂载）。
+  startCurrentItem()
 }
 
-// 每当当前素材变化时：图片/字幕用定时器推进，视频由 ended 事件推进
-watch(
-  currentItem,
-  async (item) => {
-    clearTimer()
-    textContent.value = ''
-    if (!item) return
-    markStarted(item)
+// 损坏素材延迟一秒再切换，避免单素材或全部损坏时产生紧密请求循环。
+const onMediaError = () => scheduleNext(1)
 
-    if (item.materialType === 'image') {
-      scheduleNext(item.duration > 0 ? item.duration : 10)
-    } else if (item.materialType === 'text') {
-      try {
-        const res = await fetch(item.url)
-        textContent.value = await res.text()
-      } catch (e) {
-        textContent.value = item.title
-      }
-      scheduleNext(item.duration > 0 ? item.duration : 30)
+const startCurrentItem = async () => {
+  clearTimer()
+  flushLog()
+  const activeCycle = ++cycle.value
+  textContent.value = ''
+  const item = currentItem.value
+  if (!item) return
+  markStarted(item)
+
+  if (item.materialType === 'image') {
+    scheduleNext(item.duration > 0 ? item.duration : 10)
+  } else if (item.materialType === 'text') {
+    let content: string
+    try {
+      const res = await fetch(item.url)
+      if (!res.ok) throw new Error('字幕加载失败')
+      content = await res.text()
+    } catch (e) {
+      content = item.title
     }
-    // video：由 <video> 的 ended/error 事件推进
+    // 播表切换或组件卸载后，旧请求不得覆盖内容或重新创建计时器。
+    if (activeCycle !== cycle.value) return
+    textContent.value = content
+    scheduleNext(item.duration > 0 ? item.duration : 30)
+  }
+  // video：由 <video> 的 ended/error 事件推进，保留自然播完的行为。
+}
+
+watch(
+  playlistKey,
+  () => {
+    itemIndex.value = 0
+    startCurrentItem()
   },
   { immediate: true }
 )
 
-// 播表内容变化（如换栏目）时重置
-watch(
-  () => props.module.moduleId,
-  () => {
-    itemIndex.value = 0
-  }
-)
-
 onUnmounted(() => {
+  cycle.value++
   clearTimer()
   flushLog()
 })

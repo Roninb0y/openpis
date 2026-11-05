@@ -188,6 +188,26 @@ pis1/
 
 ## 测试
 
+### 播放器浏览器回归测试
+
+需要 Node.js 20+。在真实 Chromium 中验证单素材循环、30 秒轮询期间的图片/字幕计时、
+播表变更、迟到字幕响应和桌面/竖屏显示。接口与媒体使用测试数据，不需要启动后端或数据库。
+
+```bash
+cd openpis-web
+npm ci
+npx playwright install chromium
+npm test
+```
+
+测试会自动启动独立的 Vite 服务（127.0.0.1:4173）；请保持该端口空闲。
+失败时的浏览器 trace 与显示检查截图保存在 `openpis-web/test-results/`，不提交到 Git。
+GitHub Actions 的前端任务也会运行这些测试。
+
+### 后端 API 冒烟测试
+
+**仅在可丢弃的测试数据库上运行：脚本会先删除已有业务数据。**
+
 ```bash
 # 后端启动后执行（需 Git Bash / bash）
 bash scripts/api-test.sh
